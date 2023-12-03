@@ -2,6 +2,7 @@ import random
 import poker as p
 import names
 import copy as cp
+
       
 def goto(linenum):
     global line
