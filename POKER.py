@@ -50,7 +50,7 @@ class Game:
         self.raise_active = False
         
     def deal_cards(self):
-        for i in self.player_list:
+        for i in self.in_the_round:
             i.hand = [self.deck.pop() for x in range(2)]
     
     
@@ -76,6 +76,7 @@ class Game:
                 case 3: 
                     print("Folding \n")
                     player.round_choice =  "folded"
+                    self.in_the_round.remove(player)
                 case 4:
                     self.player_list.remove(player)
                     print(player.name + " has left")
@@ -97,27 +98,54 @@ class Game:
             player.balance += x.in_pot
         for x in self.player_list:
             if x.in_pot - player.in_pot < 0 and x.round_choice != "folded":
-                self.player_list.remove(x``)
+                self.player_list.remove(x)
                 
                 
     
-    def hand_comparison(self):
-        return None
-    
+    # def hand_comparison(self):
+    #     for players in self.in_the_round:
+            
+            
+            
     def announce_winner(self):
         print("Winner of the game is: " + self.player_list[0].name + "\nPay out is: " + str(self.player_list[0].balance))
         exit()
     
+    def check_bet_continue(self):
+        raised_counter = 0
+        call_counter = 0
+        check_counter = 0
+        folded_counter = 0
+        for players in self.in_the_round:
+            match players.round_choice:
+                case "raised":
+                    raised_counter+=1
+                case "checked": 
+                    check_counter+=1
+                case "called":
+                    call_counter+=1
+        if(raised_counter == 1):
+            return False
+        if((call_counter + check_counter) == len(self.in_the_round)):
+            return False
+        return True
     
+            
+    
+    def bet_ask(self):
+        while(self.check_bet_continue() == True and (len(self.in_the_round) > 1)):
+            for x in self.in_the_round:
+                x.display_cards()
+                self.ask_player(x)
+                
     def player_turn(self, player):
         player.display_cards()
         self.ask_player(player)
-        if player.round_choice == "folded":
-            self.in_the_round.remove(player)
+        
+          
         
         
     def preflop(self):
-            
         self.player_removal()
             
         self.in_the_round[0].bet(self.table_limit/4)
@@ -139,22 +167,29 @@ class Game:
         print("\nFLOP:")
         print(self.river)
         print("\n")
-        
-        for players in self.in_the_round:
-            self.player_turn(players)
+        self.bet_ask()
         
     def the_turn(self):
-        return None
+        self.river.append(self.deck.pop())
+        print("\nTURN: ")
+        print(self.river)
+        print("\n")
+        self.bet_ask()
         
+    
     def river(self):
-        return None
+        self.river.append(self.deck.pop())
+        print("\nRiveR: ")
+        print(self.river)
+        print("\n")
+        self.bet_ask()
+        self.distribute_money(self.hand_comparison())
     
     
     def play(self):
         """Simulates a game of Texas Hold'em poker"""
         
-        while(not self.win_check):
-            
+        while(self.win_check):
             self.in_the_round = cp.deepcopy(self.player_list)
             ##preflop##
             self.preflop()
@@ -162,18 +197,17 @@ class Game:
             ##flop##
             self.flop()
             
-            
-            
             ##The Turn##
-            self.deck.pop()
-            self.river.append(self.deck.pop())
-            print("\nTURN: ")
-            print(self.river)
-            print("\n")
+            self.the_turn()
+            # self.deck.pop()
+            # self.river.append(self.deck.pop())
+            # print("\nTURN: ")
+            # print(self.river)
+            # print("\n")
             
             #The River
+            self.river()
             
-            self.in_the_round = {x:None for x in self.player_list}
             self.table_limit *= 2
         
         
@@ -184,5 +218,25 @@ g = Player("steven", 50)
 s = Player("Frank", 100)
 d = Player("David", 60)
 
-gam = Game([g,s,d ])
-gam.play()
+# gam = Game([g,s,d])
+# # gam.deal_cards()
+# # print(gam.player_list[0].hand)
+# # # print(gam.player_list[0].hand)
+# gam.play()
+
+combo1 = p.Combo.from_cards(p.Card('A♦') , p.Card('Q♠'))
+combo2 = p.Combo.from_cards(p.Card('Q♥') , p.Card('Q♠'))
+card1 = [p.Card('Qs'), p.Card('Ad'), p.Card('3d'), p.Card('As')]
+card2 = [p.Card('Q♠'), p.Card('A♦'), p.Card('3♦'), p.Card('A♠')]
+result1 = ""
+result2 = ""
+for x in card1:
+    result1 += str(x) + " "
+    
+# for x in card2:
+#     result2 += str(x.rank) + str(x.suit)
+    
+    
+x = p.Range('2s2h 3d3s')
+d = p.Range('2s2h AsAh 3d3s')
+print(x > d)
