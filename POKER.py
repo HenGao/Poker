@@ -6,6 +6,7 @@ import copy as cp
 import pokerlib as pl
 from pokerlib import HandParser
 from pokerlib.enums import Rank, Suit
+import PySimpleGUI as sg
       
 def goto(linenum):
     global line
@@ -392,13 +393,28 @@ class Game:
         
     
 
-g = Player("steven", 50)
+# g = Player("steven", 50)
 
-s = Player("Frank", 100)
-d = Player("David", 60)
+# s = Player("Frank", 100)
+# d = Player("David", 60)
 
-gam = Game([g,s,d])
-gam.play()
+# gam = Game([g,s,d])
+# gam.play()
+
+layout = [
+    [sg.Image("/Users/henry./Desktop/Programming/Python Code/poker_project/Images/2_of_clubs.png"],
+    [sg.Image("/Users/henry./Desktop/Programming/Python Code/poker_project/Images/2_of_clubs.png")],
+    [sg.Button('Exit')]
+]
+
+window = sg.Window("image viewer", layout)
+while True:
+    event, value = window.read()
+    if event == "Exit" or event == sg.WIN_CLOSED:
+        break
+
+window.close() 
+        
 
 # gam.river = [p.Card('J♠'), p.Card('7♠'), p.Card('8♦'), p.Card('4♠'), p.Card('4♦')]
 # # gam.player_list[0].hand = [p.Card('5♥'), p.Card('7♣')]
