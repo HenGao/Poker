@@ -30,14 +30,14 @@ class Player:
         self.round_choice = ""
         self.ALL_IN = False
         
-    def bet(self, amt):
+    def bet(self, amt): # Changes the user balance based on the amount passed
         """
         Bet method that allows a player to place 
         a bet of size 'amt'.
         """
         self.balance -= amt
         
-    def display_cards(self):
+    def display_cards(self): # Displays the players current hand using PySimpleGUI
         """
         Displays the current hand of the player through
         the PySimpleGUI library window.
@@ -61,11 +61,11 @@ class Player:
         print(self.hand)
         print("\n")
         
-    def __str__(self):
+    def __str__(self): # Returns the players balance in a neatly formatted string whenever the player is converted to a string
         result = "Name: {name} \nCurrent Balance: {curr_bal}".format(name = self.name, curr_bal = self.balance)
         return result
         
-class Bot(Player):
+class Bot(Player): # EXTENSIBILITY ELEMENT: A bot instance that inherits the player elements
     """
     Instance of extensibility. Allows the player to create
     playable bots 
@@ -75,10 +75,10 @@ class Bot(Player):
         Sets the difficulty, name, and balance of the 
         created bot.
         """
-        super().__init__(names.get_first_name(), random.randint(8, player_bal))
+        super().__init__(names.get_first_name(), random.randint(8, player_bal)) #instantiates a bot instance
         
 
-class Game:
+class Game: # Simulates a hame of poker
     """
     Game object that runs all of the programs
     needed to mimic a full game of poker.
@@ -89,14 +89,13 @@ class Game:
         to input a table limit, and creates the various important tracking
         variables necessary to keep the program functioning.
         """
-        self.deck = random.sample(list(p.card.Card), len((list(p.card.Card))))
+        self.deck = random.sample(list(p.card.Card), len((list(p.card.Card)))) # Generates and shuffles a deck of 52 cards
         self.player_list = players
         self.in_the_round = cp.copy(self.player_list)
         self.poorest_bal = self.player_list[0].balance
-        for x in players:
+        for x in players: # Finds the poorest player
             if x.balance <= self.poorest_bal:
                 self.poorest_bal = x.balance
-        self.table_limit = 99999999999999999
         for x in self.player_list:
             print(str(x) + "\n")
         self.table_limit = 8
@@ -109,7 +108,7 @@ class Game:
         self.is_preflop = True
         self.river = []
         
-    def deal_cards(self):
+    def deal_cards(self): # Deals 2 cards to each of the players in the game
         """
         Deals cards to each of the players who are 
         still in the current poker round.
@@ -117,14 +116,14 @@ class Game:
         for i in self.player_list:
             i.hand = [self.deck.pop() for x in range(2)]
     
-    def fold_checker(self):
+    def fold_checker(self): 
         """
         Checks the case where every player
         folds but one.
         """
         counter = 0
         if len(self.in_the_round) == 1:
-            raise ZeroDivisionError
+            raise ZeroDivisionError # This error was chosen for it's uniqueness 
         
     def ask_bot(self, bot):
         """
@@ -351,25 +350,7 @@ class Game:
         player.balance += self.pot
         self.pot = 0
         for x in self.player_list:
-            # x.in_pot = 0
             x.All_IN = False
-        # for x in self.in_the_round:
-        #     if(player.balance > x.in_pot):
-        #         player.balance += x.in_pot
-        #     else:
-        #         player.balance += player.in_pot
-            
-        #     if (x != player and x.in_pot - player.in_pot <= 0):
-        #         print(x.name + " has ran out of money!")
-        #         self.in_the_round.remove(x)
-        #         self.player_list.remove(x)
-        #     if x.in_pot > 0 and x != player:
-        #         x.balance += x.in_pot
-        # player.balance += self.pot
-        # self.pot = 0    
-        # for x in self.player_list:
-        #     x.in_pot = 0
-        #     x.ALL_IN = False
                 
     
     def libary_conversion(self, pool):
@@ -377,6 +358,8 @@ class Game:
         Method that converts values from the 'poker' library
         to the 'pokerlib' library.
         """
+        # The following dictionaries represents the two different suit + rank storage techniques use in both
+        # poker libaries. The dictionaries allow for smooth conversion between the two libaries. 
         ranks = {
         "A" : Rank.ACE,
         "2" : Rank.TWO,
@@ -402,8 +385,8 @@ class Game:
         
         converted_hand = []
         for cards in pool:
-            converted_hand.append((ranks[str(cards.rank)], suits[str(cards.suit)]))
-
+            converted_hand.append((ranks[str(cards.rank)], suits[str(cards.suit)])) # Generates a converted hand from 'poker' syntax to 'pokerlib' syntax
+ 
         return converted_hand
             
                 
@@ -478,11 +461,9 @@ class Game:
                 if(type(x) == type(Bot(100))):
                     self.ask_bot(x)
                 else:
-                    # x.display_cards()
                     print(x.name + "'s Turn")
                     self.display_river(x)
                     self.ask_player(x)
-                # self.window.close() 
                 
         self.last_bet = 0
         self.check_distrupted = False
@@ -660,10 +641,10 @@ class Game:
         
         while(self.win_check):
             self.player_removal()
-            self.deck = random.sample(list(p.card.Card), len((list(p.card.Card))))
+            self.deck = random.sample(list(p.card.Card), len((list(p.card.Card)))) # Makes a new shuffled deck after each round 
             for x in self.player_list:
-                x.hand = []
-            self.in_the_round = cp.copy(self.player_list)
+                x.hand = [] # Resets each players hand after each round 
+            self.in_the_round = cp.copy(self.player_list) # Generates a new list of players in the round so that eliminated players get flushed out
             
             for x in self.player_list:
                     print(str(x) + "\n")
@@ -682,42 +663,13 @@ class Game:
                 print("\n\n\n\n\n\n\n")
                 
                 self.round_num += 1 
-            except ZeroDivisionError:
+            except ZeroDivisionError: # If the special cases are triggered, the automatically jumps to the river state and decides the winner 
                 round_winner = self.hand_comparison()
                 self.distribute_money(round_winner)
                 print(round_winner.name + " has the best hand")
                 print("MONEY DISTRIBUTED \n")
-                # for x in self.player_list:
-                #     print(str(x) + "\n")
                 self.player_removal()
                 for x in self.player_list: 
                     x.ALL_IN = False
         for x in self.player_list:
             print(str(x) + "\n")
-        # self.table_limit *= 2
-        
-        
-# choice = 0
-# while choice != 2:
-#     choice = int(input(("Welcome to Poker.py! \n1: Create New Game \n2: Exit Game\n")))
-#     match choice:
-#         case 1:
-#             playerlist = [] 
-#             print("How many players (maximum 4): ")
-#             playercount = int(input())
-#             for x in range(0,playercount):
-#                 playerlist.append(Player(input("Input player name: "), int(input("Player balance: "))))
-#             if(playercount < 4):
-#                 max_bot_bal = int(input("Input maximum possible bot balance: "))
-#                 for b in range(0, 4 - playercount):
-#                         playerlist.append(Bot(max_bot_bal))
-#             game = Game(playerlist)
-#             print("\n--------------\nSTARTING GAME\n--------------\n")
-#             game.play()
-    
-# g = Bot(50, "highrisk")
-# s = Player("Frank", 100)
-# d = Player("David", 60)
-
-# gam = Game([s,d])
-# gam.play()
