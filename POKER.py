@@ -28,8 +28,6 @@ class Player:
         self.name = name
         self.balance = balance
         self.hand = []
-        self.out = False
-        self.in_pot = 0.0
         self.round_choice = ""
         self.ALL_IN = False
         
@@ -39,9 +37,6 @@ class Player:
         a bet of size 'amt'.
         """
         self.balance -= amt
-        self.in_pot += amt
-        if(self.balance < 0):
-            self.out = True
         
     def display_cards(self):
         """
@@ -76,13 +71,12 @@ class Bot(Player):
     Instance of extensibility. Allows the player to create
     playable bots 
     """
-    def __init__(self, player_bal, difficulty):
+    def __init__(self, player_bal):
         """
         Sets the difficulty, name, and balance of the 
         created bot.
         """
         super().__init__(names.get_first_name(), random.randint(8, player_bal))
-        self.difficulty = difficulty
         
 
 class Game:
@@ -104,7 +98,7 @@ class Game:
             if x.balance <= self.poorest_bal:
                 self.poorest_bal = x.balance
         self.table_limit = 99999999999999999
-        for x in playerlist:
+        for x in self.player_list:
             print(str(x) + "\n")
         self.table_limit = 8
         self.last_bet = 0
@@ -114,13 +108,14 @@ class Game:
         self.check_distrupted = False
         self.round_num = 1
         self.is_preflop = True
+        self.river = []
         
     def deal_cards(self):
         """
         Deals cards to each of the players who are 
         still in the current poker round.
         """
-        for i in self.in_the_round:
+        for i in self.player_list:
             i.hand = [self.deck.pop() for x in range(2)]
     
     def fold_checker(self):
@@ -142,12 +137,16 @@ class Game:
         self.fold_checker()
         if(self.last_bet != 0 and bot.balance >= self.last_bet):
             #if the last bet was higher than 3/4 of the bot's remaining balance, the bot folds
-            if(self.last_bet >= bot.balance*.75 and bot.difficulty != None): # if the bot's difficulty is high risk, it bets more
+            if(self.last_bet >= bot.balance*.75):
+                if bot.ALL_IN == True:
+                    return None
                 self.check_distrupted = True
                 bot.ALL_IN = True
                 self.last_bet = bot.balance
+                self.pot += bot.balance
                 bot.bet(bot.balance)
                 print(bot.name + " is ALL IN!")
+                bot.round_choice = "raised"
                 self.all_in_check()
             else:
                 x = random.randint(1,2)
@@ -155,12 +154,14 @@ class Game:
                     case 1: 
                         self.check_distrupted = True
                         print(bot.name + " has called with " + str(self.last_bet))
+                        self.pot += self.last_bet
                         bot.bet(self.last_bet)
                         bot.round_choice = "called"
                     case 2: 
                         self.check_distrupted = True
                         random_raise = random.randint(1, bot.balance)
                         self.last_bet = random_raise
+                        self.pot += random_raise
                         bot.bet(random_raise)
                         bot.round_choice = "raised"
                         print(bot.name + " has raised " + str(random_raise) +"!\n")
@@ -176,19 +177,20 @@ class Game:
                     case 1: 
                         self.check_distrupted = True
                         bot.bet(self.last_bet)
+                        self.pot += self.last_bet
                         bot.round_choice = "called"
                     case 2: 
                         self.check_distrupted = True
                         random_raise = random.randint(1, bot.balance)
                         self.last_bet = random_raise
+                        self.pot += random_raise
                         bot.bet(random_raise)
                         bot.round_choice = "raised"
                         print(bot.name + " has raised " + str(random_raise) +"!\n")
                     case 3: 
                         print(bot.name + " has folded \n")
                         bot.round_choice =  "folded"
-                        self.pot += bot.in_pot
-                        bot.in_pot = 0
+
                         self.in_the_round.remove(bot)
                         self.all_in_check()
                         self.fold_checker
@@ -199,8 +201,10 @@ class Game:
             self.check_distrupted = True
             bot.ALL_IN = True
             self.last_bet = bot.balance
+            self.pot += bot.balance
             bot.bet(bot.balance)
-            print(bot.name + "is ALL IN!")
+            print(bot.name + " is ALL IN!")
+            bot.round_choice = "raised"
             self.all_in_check()
             self.fold_checker()
         # bot.bet(random.uniform(0,30))
@@ -218,7 +222,6 @@ class Game:
         self.all_in_check()
         self.fold_checker()
         print("Your balance is: " + str(player.balance))
-        print("Money in pot this round: " + str(player.in_pot))
         if(player.ALL_IN == True):
             print("Skipping\n")
             return None
@@ -229,13 +232,12 @@ class Game:
                     print(player.name + " is going ALL IN")
                     player.ALL_IN = True
                     self.last_bet = player.balance
+                    self.pot += player.balance
                     player.bet(player.balance)
                     self.all_in_check()
                 case 2: 
                     print(player.name + " is folding \n")
                     player.round_choice = "folded"
-                    self.pot += player.in_pot
-                    player.in_pot = 0
                     self.in_the_round.remove(player)
                     self.all_in_check()
                     self.fold_checker
@@ -254,6 +256,7 @@ class Game:
                     else:
                         print(player.name + " has called with " + str(self.last_bet) + "\n")
                         player.bet(self.last_bet)
+                        self.pot += self.last_bet
                         # self.pot += self.last_bet
                         player.round_choice = "called"
                         self.all_in_check()
@@ -271,27 +274,27 @@ class Game:
                         player.ALL_IN = True
                         self.last_bet = player_raise
                         player.bet(player_raise)
+                        self.pot += player_raise
                         print(player.name + " is ALL IN!")
                         self.all_in_check()
                     else:
                         self.last_bet = player_raise
                         player.bet(player_raise)
+                        self.pot += player_raise
                         print(player.name + " has raised with " + str(player_raise) + "\n")
+                        
                     player.round_choice =  "raised"
                     self.check_distrupted = True
                     # self.pot += player_raise
                 case 3: 
                     print(player.name + " has folded \n")
                     player.round_choice =  "folded"
-                    self.pot += player.in_pot
-                    player.in_pot = 0
                     self.in_the_round.remove(player)
                     self.all_in_check()
                     self.fold_checker
 
                 case 4:
                     print(player.name + " has left")
-                    self.pot += player.in_pot 
                     self.player_list.remove(player)
                     self.in_the_round.remove(player)
                     self.all_in_check()
@@ -309,7 +312,6 @@ class Game:
         for players in self.player_list:
             if players.balance <= 0:
                 print(players.name + " has ran out of money!")
-                self.pot += players.in_pot
                 self.player_list.remove(players)
                 self.in_the_round.remove(players)
     
@@ -347,24 +349,28 @@ class Game:
         Distributes the money in the pot to the 
         winner of the round. 
         """
-        for x in self.in_the_round:
-            if(player.balance > x.in_pot):
-                player.balance += x.in_pot
-            else:
-                player.balance += player.in_pot
-            x.in_pot -= player.in_pot
-            player.balance += self.pot
-            self.pot = 0
-            if (x != player and x.in_pot <= 0):
-                print(x.name + " has ran out of money!")
-                self.in_the_round.remove(x)
-                self.player_list.remove(x)
-            if x.in_pot > 0 and x != player:
-                x.balance += x.in_pot
-                
+        player.balance += self.pot
+        self.pot = 0
         for x in self.player_list:
-            x.in_pot = 0
-            x.ALL_IN = False
+            # x.in_pot = 0
+            x.All_IN = False
+        # for x in self.in_the_round:
+        #     if(player.balance > x.in_pot):
+        #         player.balance += x.in_pot
+        #     else:
+        #         player.balance += player.in_pot
+            
+        #     if (x != player and x.in_pot - player.in_pot <= 0):
+        #         print(x.name + " has ran out of money!")
+        #         self.in_the_round.remove(x)
+        #         self.player_list.remove(x)
+        #     if x.in_pot > 0 and x != player:
+        #         x.balance += x.in_pot
+        # player.balance += self.pot
+        # self.pot = 0    
+        # for x in self.player_list:
+        #     x.in_pot = 0
+        #     x.ALL_IN = False
                 
     
     def libary_conversion(self, pool):
@@ -431,7 +437,6 @@ class Game:
         Announces the last remaining player as the winner and 
         distributes any remaining pot money to the player.
         """
-        self.player_list[0].balance += self.pot
         print("Winner of the game is: " + self.player_list[0].name + "\nPay out is: " + str(self.player_list[0].balance))
         exit()
     
@@ -446,7 +451,7 @@ class Game:
         raised_counter = 0
         call_counter = 0
         check_counter = 0
-        folded_counter = 0
+        # folded_counter = 0
         for players in self.in_the_round:
             match players.round_choice:
                 case "raised":
@@ -468,14 +473,10 @@ class Game:
         still in the round for their moves. Also prints the total pot
         amount for that round.
         """
-        totalPot = 0
-        for player in self.in_the_round:
-            totalPot += player.in_pot
-        totalPot += self.pot
-        print("-------------------\n" + "TOTAL POT THIS ROUND IS: " + str(totalPot) + "\n-------------------")
+        print("-------------------\n" + "TOTAL POT THIS ROUND IS: " + str(self.pot) + "\n-------------------")
         while(self.check_bet_continue() == True and (len(self.in_the_round) > 1)):
             for x in self.in_the_round:
-                if(type(x) == type(Bot(100, ""))):
+                if(type(x) == type(Bot(100))):
                     self.ask_bot(x)
                 else:
                     # x.display_cards()
@@ -484,7 +485,7 @@ class Game:
                     self.ask_player(x)
                 # self.window.close() 
                 
-        self.last_bet = 0.0
+        self.last_bet = 0
         self.check_distrupted = False
                 
     def player_turn(self, player):
@@ -493,7 +494,7 @@ class Game:
         pre-flop round. Used to prevent showing 
         an empty river. 
         """
-        if(type(player) == type(Bot(100,""))):
+        if(type(player) == type(Bot(100))):
             self.ask_bot(player)
         else:
             player.display_cards()
@@ -521,18 +522,39 @@ class Game:
             self.announce_winner()
             
         self.is_preflop == True #fixes the fact that you can't check during the preflop
-        smallblind = cp.copy(self.in_the_round[0])
-        bigblind = cp.copy(self.in_the_round[1])
-        smallblind.bet(2)
-        bigblind.bet(4)
-        smallblind.round_choice = "raised"
-        bigblind.round_choice = "raised"
-        self.last_bet = self.table_limit/2
+        small_blind = self.in_the_round[0]
+        big_blind = self.in_the_round[1]
+        if(small_blind.balance > 2):
+            small_blind.bet(2)
+            self.last_bet = 2
+        else:
+            small_blind.ALL_IN = True
+            self.last_bet = small_blind.balance
+            small_blind.bet(small_blind.balance)
+            print(small_blind.name + " is ALL IN!")
+            small_blind.round_choice = "raised"
+            self.all_in_check()
+            
+        self.pot += self.last_bet
+        
+        if(big_blind.balance > 4):
+            big_blind.bet(4)
+            self.last_bet = 4
+        else:
+            big_blind.ALL_IN = True
+            self.last_bet = big_blind.balance
+            big_blind.bet(big_blind.balance)
+            print(big_blind.name + " is ALL IN!")
+            big_blind.round_choice = "raised"
+            self.all_in_check()
+            
+        self.pot += self.last_bet
+        
         # self.pot += (.75*self.table_limit)
         self.deal_cards()
         
         for x in self.player_list:
-            if(x != smallblind and x != bigblind):
+            if(x != self.in_the_round[0] and x != self.in_the_round[1]):
                 self.player_turn(x)
         self.last_bet = 0
         self.check_distrupted = False
@@ -614,6 +636,7 @@ class Game:
         print(self.river)
         print("\n")
         self.bet_ask()
+        self.last_bet = 0
         
     
     def the_river(self):
@@ -642,11 +665,9 @@ class Game:
             for x in self.player_list:
                 x.hand = []
             self.in_the_round = cp.copy(self.player_list)
-            totalbal = 0
+            
             for x in self.player_list:
-                    totalbal += x.balance
                     print(str(x) + "\n")
-            print("TOTAL BALANCE: " + str(totalbal))
             try:
                 #pre-flop
                 self.preflop()
@@ -677,31 +698,27 @@ class Game:
         # self.table_limit *= 2
         
         
-choice = 0
-while choice != 2:
-    choice = int(input(("Welcome to Poker.py! \n1: Create New Game \n2: Exit Game\n")))
-    match choice:
-        case 1:
-            playerlist = [] 
-            print("How many players (maximum 4): ")
-            playercount = int(input())
-            for x in range(0,playercount):
-                playerlist.append(Player(input("Input player name: "), int(input("Player balance: "))))
-            if(playercount < 4):
-                max_bot_bal = int(input("Input maximum possible bot balance: "))
-                bot_difficulty = input("Input the difficulty of the bots\n(1) default\n(2) highrisk (more likely to all in)")
-                for b in range(0, 4 - playercount):
-                    if(bot_difficulty == "1" or bot_difficulty == "default"):
-                        playerlist.append(Bot(max_bot_bal, "default"))
-                    if(bot_difficulty == "2" or bot_difficulty == "highrisk"):
-                        playerlist.append(Bot(max_bot_bal, "highrisk"))
-            game = Game(playerlist)
-            print("\n--------------\nSTARTING GAME\n--------------\n")
-            game.play()
+# choice = 0
+# while choice != 2:
+#     choice = int(input(("Welcome to Poker.py! \n1: Create New Game \n2: Exit Game\n")))
+#     match choice:
+#         case 1:
+#             playerlist = [] 
+#             print("How many players (maximum 4): ")
+#             playercount = int(input())
+#             for x in range(0,playercount):
+#                 playerlist.append(Player(input("Input player name: "), int(input("Player balance: "))))
+#             if(playercount < 4):
+#                 max_bot_bal = int(input("Input maximum possible bot balance: "))
+#                 for b in range(0, 4 - playercount):
+#                         playerlist.append(Bot(max_bot_bal))
+#             game = Game(playerlist)
+#             print("\n--------------\nSTARTING GAME\n--------------\n")
+#             game.play()
     
 # g = Bot(50, "highrisk")
 # s = Player("Frank", 100)
 # d = Player("David", 60)
 
-# gam = Game([g,s,d])
+# gam = Game([s,d])
 # gam.play()
