@@ -16,3 +16,5 @@ PLEASE NOTE THAT YOU MUST RUN THIS THROUGH THE DEFAULT PYTHON INTERPRETER. IF YO
 deactivate conda 
 
 To run the intended program, please run the main method titled poker_main.py. 
+
+!!! MAKE SURE THAT THE IMAGES FOLDER AND THE CODE ARE IN THE SAME FILE ENTITLED "Poker" OTHERWISE THE IMAGES WILL NOT LOAD !!!
