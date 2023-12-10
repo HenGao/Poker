@@ -24,8 +24,16 @@ class pokertester(unittest.TestCase):
             x.ALL_IN = True
         AssertionError(g.all_in_check, ZeroDivisionError)
     
-    def choice_wipe(self):
+    def test_choice_wipe(self):
         g = pokertester.game_creation()
+        g.player_list[0].round_choice = "raised"
+        g.choice_wipe()
+        self.assertEqual(g.player_list[0].round_choice, "")
+        
+    def test_bet(self):
+        g = pokertester.game_creation()
+        g.player_list[0].bet(30)
+        self.assertEqual(g.player_list[0].balance, 70)
         
         
 if __name__ == '__main__':

@@ -7,7 +7,6 @@ import pokerlib as pl
 from pokerlib import HandParser
 from pokerlib.enums import Rank, Suit
 import PySimpleGUI as sg
-import math
 
 # Poker.py
 # By: Henry Gao
